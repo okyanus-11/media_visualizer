@@ -43,3 +43,21 @@ pyinstaller --noconfirm --onefile --windowed --name MediaVisualizer main.py
 
 > Not: Windows SmartScreen, kendi oluşturduğunuz imzasız EXE'lerde uyarı gösterebilir. Bu normaldir; kaynak kodu siz oluşturduğunuz için güvenliğinden emin olduğunuz dosyalarda çalıştırın.
 
+## Sound Visualizer (Windows system audio)
+
+The Sound Visualizer captures the default Windows speaker output, so it can display audio from apps such as Spotify while they play. It uses Windows WASAPI loopback through the `soundcard` package and shows a CAVA-inspired spectrum.
+
+Install its separate dependencies and run it:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r sound_requirements.txt
+python sound_visualizer.py
+```
+
+Build its standalone Windows executable with:
+
+```powershell
+python -m PyInstaller --noconfirm --onefile --windowed --name SoundVisualizer sound_visualizer.py
+```
