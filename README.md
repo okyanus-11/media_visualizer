@@ -1,14 +1,28 @@
 # Media Visualizer
 
-Python ve Tkinter ile geliştirilmiş basit bir masaüstü görsel görselleştirici uygulamasıdır. PNG, JPG ve JPEG dosyalarını açabilir; siyah-beyaz, sepya, negatif filtreleri ile parlaklık ayarı uygulayabilir ve sonucu yeni dosya olarak kaydedebilirsiniz.
+A lightweight Tkinter desktop app for image filters and live system-audio
+visualization.
 
-Bu proje özellikle anlaşılır kalması için tek Python dosyasında tutulmuştur.
+## Image Visualizer
 
-## Hızlı kurulum ve çalıştırma
+Open PNG, JPG or JPEG files, apply grayscale, sepia, negative and brightness
+adjustments, then save the result. Filter rendering is debounced so rapid
+slider movement does not trigger a full image render for every intermediate
+value.
 
-1. Bilgisayarınızda Python 3.10 veya daha yeni bir sürüm olduğundan emin olun. [Python indirme sayfasından](https://www.python.org/downloads/) indirin. Kurulum ekranında **Add Python to PATH** seçeneğini işaretleyin.
-2. Proje klasörünü indirin veya GitHub'dan klonlayın.
-3. Klasörde terminal açın ve şu komutları çalıştırın:
+Choose Graphite, Midnight or Light, then use **Accent** to pick any accent
+colour. Preferences are saved locally.
+
+## Sound Visualizer
+
+The Sound Visualizer captures the default Windows speaker output through
+WASAPI loopback and renders a CAVA-inspired spectrum. Audio capture runs in a
+background thread; the Tkinter interface remains on its main thread and
+updates the spectrum at approximately 30 FPS.
+
+It has the same saved theme and custom accent controls.
+
+Install image dependencies and run:
 
 ```powershell
 python -m venv .venv
@@ -17,47 +31,16 @@ pip install -r requirements.txt
 python main.py
 ```
 
-PowerShell etkinleştirme izni vermezse, yalnızca o terminal oturumu için şu komutu çalıştırın:
+For the Sound Visualizer, install its separate dependencies and run:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-```
-
-Ardından `.venv\Scripts\Activate.ps1` komutunu tekrar kullanın.
-
-## Kolay kullanım: EXE oluşturma
-
-Python yüklüyse, bağımlılıkları kurduktan sonra `build_exe.bat` dosyasına çift tıklayın. İşlem bittiğinde şu dosya oluşur:
-
-```text
-dist\MediaVisualizer.exe
-```
-
-Bu `.exe` dosyası tek başına çalışır; hedef bilgisayarda Python kurulmasına gerek yoktur. İlk oluşturma birkaç dakika sürebilir. EXE'yi paylaşırken sadece `dist` klasöründeki dosyayı göndermeniz yeterlidir.
-
-Alternatif olarak terminalden:
-
-```powershell
-pyinstaller --noconfirm --onefile --windowed --name MediaVisualizer main.py
-```
-
-> Not: Windows SmartScreen, kendi oluşturduğunuz imzasız EXE'lerde uyarı gösterebilir. Bu normaldir; kaynak kodu siz oluşturduğunuz için güvenliğinden emin olduğunuz dosyalarda çalıştırın.
-
-## Sound Visualizer (Windows system audio)
-
-The Sound Visualizer captures the default Windows speaker output, so it can display audio from apps such as Spotify while they play. It uses Windows WASAPI loopback through the `soundcard` package and shows a CAVA-inspired spectrum.
-
-Install its separate dependencies and run it:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
 pip install -r sound_requirements.txt
 python sound_visualizer.py
 ```
 
-Build its standalone Windows executable with:
+Build standalone Windows executables with PyInstaller:
 
 ```powershell
+python -m PyInstaller --noconfirm --onefile --windowed --name MediaVisualizer main.py
 python -m PyInstaller --noconfirm --onefile --windowed --name SoundVisualizer sound_visualizer.py
 ```
