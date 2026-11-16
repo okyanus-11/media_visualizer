@@ -1,11 +1,22 @@
 name: Python CI
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  syntax:
+  syntax-and-theme-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - run: python -m compileall -q main.py sound_visualizer.py
+          python-version: "3.12"
+      - name: Compile all Python entry points
+        run: python -m compileall -q main.py sound_visualizer.py theme.py
+      - name: Run palette tests
+        run: python -m unittest discover -s tests -v
