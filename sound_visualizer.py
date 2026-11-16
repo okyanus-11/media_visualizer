@@ -27,6 +27,9 @@ class AudioVisualizer:
         self._capture_thread = None
         self._ui_queue = queue.SimpleQueue()
         self.samples = np.zeros(2048, dtype=np.float32)
+        # The FFT window is constant; calculate it once instead of allocating
+        # a new Hann array on every 30 FPS animation tick.
+        self._fft_window = np.hanning(2048).astype(np.float32)
         self._settings_path = Path.home() / ".media-visualizer.json"
         self._preferences = self._load_preferences()
         self.theme_name = self._preferences.get("theme", "graphite")
@@ -91,6 +94,8 @@ class AudioVisualizer:
         style.map("TButton", background=[("active", palette["border"])])
         style.configure("TCombobox", fieldbackground=palette["surface_alt"], background=palette["surface_alt"], foreground=palette["text"], bordercolor=palette["border"], padding=5)
         self.canvas.configure(background=palette["surface"])
+        for item in self._bar_items:
+            self.canvas.itemconfigure(item, fill=self.accent)
         self._save_preferences()
 
     def _theme_selected(self, _event=None):
@@ -176,7 +181,7 @@ class AudioVisualizer:
         if width > 2 and height > 2:
             with self._samples_lock:
                 samples = self.samples.copy()
-            spectrum = np.abs(np.fft.rfft(samples * np.hanning(len(samples))))
+            spectrum = np.abs(np.fft.rfft(samples * self._fft_window))
             bars = min(128, max(32, width // 8))
             spectrum = np.interp(
                 np.linspace(0, len(spectrum) - 1, bars),
@@ -201,7 +206,6 @@ class AudioVisualizer:
                 self.canvas.coords(
                     item, x - 2, center - bar_height, x + 2, center + bar_height * 0.42
                 )
-                self.canvas.itemconfigure(item, fill=self.accent)
         self.root.after(33, self.animate)
 
     def close(self):
