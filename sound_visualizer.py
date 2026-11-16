@@ -57,6 +57,9 @@ class AudioVisualizer:
         self.status.pack(fill="x")
         self.canvas = tk.Canvas(root, background="#171f2a", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True, padx=14, pady=14)
+        # Keep canvas items and update their geometry instead of recreating
+        # every bar on each animation frame.
+        self._bar_items = []
         root.protocol("WM_DELETE_WINDOW", self.close)
         self.apply_theme()
         self.animate()
@@ -183,16 +186,22 @@ class AudioVisualizer:
             spectrum = np.log1p(spectrum * 12)
             peak = max(float(spectrum.max()), 1.0)
             spectrum = spectrum / peak
-            self.canvas.delete("spectrum")
+            if len(self._bar_items) != bars:
+                self.canvas.delete("spectrum")
+                self._bar_items = [
+                    self.canvas.create_rectangle(0, 0, 0, 0, fill=self.accent, outline="", tags="spectrum")
+                    for _ in range(bars)
+                ]
             center = height * 0.56
             for index, value in enumerate(spectrum):
                 distance = abs(index - bars / 2) / max(bars / 2, 1)
                 bar_height = max(2, int(height * 0.66 * (1 - 0.56 * distance) * float(value)))
                 x = (index + 0.5) * width / bars
-                self.canvas.create_rectangle(
-                    x - 2, center - bar_height, x + 2, center + bar_height * 0.42,
-                    fill=self.accent, outline="", tags="spectrum",
+                item = self._bar_items[index]
+                self.canvas.coords(
+                    item, x - 2, center - bar_height, x + 2, center + bar_height * 0.42
                 )
+                self.canvas.itemconfigure(item, fill=self.accent)
         self.root.after(33, self.animate)
 
     def close(self):
