@@ -13,7 +13,7 @@ class ThemeTests(unittest.TestCase):
 
     def test_graphite_is_the_default_visual_direction(self):
         self.assertEqual(THEMES["graphite"]["background"], "#10151d")
-        self.assertEqual(THEMES["graphite"]["accent"], "#78aaff")
+        self.assertEqual(THEMES["graphite"]["accent"], "#68a9ff")
 
 
 if __name__ == "__main__":
