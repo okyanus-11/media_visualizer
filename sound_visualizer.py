@@ -1,6 +1,7 @@
 """Low-latency system-audio visualizer with background capture and themes."""
 
 import json
+import queue
 import threading
 from pathlib import Path
 import tkinter as tk
@@ -23,6 +24,7 @@ class AudioVisualizer:
         self._stop_event = threading.Event()
         self._samples_lock = threading.Lock()
         self._capture_thread = None
+        self._ui_queue = queue.SimpleQueue()
         self.samples = np.zeros(2048, dtype=np.float32)
         self._settings_path = Path.home() / ".media-visualizer.json"
         self._preferences = self._load_preferences()
@@ -97,12 +99,10 @@ class AudioVisualizer:
             self.apply_theme()
 
     def _post_to_ui(self, callback):
-        if self._closing:
-            return
-        try:
-            self.root.after(0, callback)
-        except tk.TclError:
-            pass
+        # Tk widgets are touched only by the main thread; the capture worker
+        # communicates through this thread-safe queue.
+        if not self._closing:
+            self._ui_queue.put(callback)
 
     def start(self):
         if self.running:
@@ -159,6 +159,11 @@ class AudioVisualizer:
     def animate(self):
         if self._closing:
             return
+        while not self._ui_queue.empty():
+            try:
+                self._ui_queue.get_nowait()()
+            except queue.Empty:
+                break
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         if width > 2 and height > 2:
             with self._samples_lock:
