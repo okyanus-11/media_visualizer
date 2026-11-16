@@ -1,9 +1,13 @@
 """Basit görsel görselleştirici uygulaması."""
 
+import json
+from pathlib import Path
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import colorchooser, filedialog, messagebox, ttk
 
 from PIL import Image, ImageEnhance, ImageOps, ImageTk
+
+from theme import THEMES
 
 
 class MediaVisualizerApp:
@@ -17,8 +21,67 @@ class MediaVisualizerApp:
         self.current_image = None
         self.photo_image = None  # Tkinter resmi bellekten silmesin diye saklanır.
         self.image_path = ""
+        self._render_job = None
+        self._settings_path = Path.home() / ".media-visualizer.json"
+        self._preferences = self._load_preferences()
+        self.theme_name = self._preferences.get("theme", "graphite")
+        if self.theme_name not in THEMES:
+            self.theme_name = "graphite"
+        self.accent = self._preferences.get("accent", THEMES[self.theme_name]["accent"])
 
         self.create_widgets()
+        self.apply_theme()
+
+    def _load_preferences(self):
+        try:
+            data = json.loads(self._settings_path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except (OSError, json.JSONDecodeError):
+            return {}
+
+    def _save_preferences(self):
+        temp = self._settings_path.with_suffix(".tmp")
+        try:
+            temp.write_text(json.dumps({"theme": self.theme_name, "accent": self.accent}, indent=2), encoding="utf-8")
+            temp.replace(self._settings_path)
+        except OSError:
+            temp.unlink(missing_ok=True)
+
+    def apply_theme(self):
+        palette = dict(THEMES[self.theme_name])
+        palette["accent"] = self.accent
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+        self.root.configure(background=palette["background"])
+        style.configure("TFrame", background=palette["background"])
+        style.configure("TLabel", background=palette["background"], foreground=palette["text"], font=("Segoe UI", 10))
+        style.configure("TButton", background=palette["surface_alt"], foreground=palette["text"], bordercolor=palette["border"], padding=(9, 6))
+        style.map("TButton", background=[("active", palette["border"])])
+        style.configure("TCombobox", fieldbackground=palette["surface_alt"], background=palette["surface_alt"], foreground=palette["text"], bordercolor=palette["border"], padding=5)
+        style.configure("Horizontal.TScale", background=palette["background"], troughcolor=palette["surface_alt"])
+        self.canvas.configure(background=palette["surface"])
+        self.info_label.configure(foreground=palette["muted"])
+        self._save_preferences()
+
+    def _theme_selected(self, _event=None):
+        self.theme_name = self.theme_select.get().lower()
+        self.accent = THEMES[self.theme_name]["accent"]
+        self.apply_theme()
+
+    def choose_accent(self):
+        selected = colorchooser.askcolor(color=self.accent, parent=self.root, title="Choose accent colour")[1]
+        if selected:
+            self.accent = selected
+            self.apply_theme()
+
+    def _schedule_changes(self):
+        if self._render_job is not None:
+            self.root.after_cancel(self._render_job)
+        self._render_job = self.root.after(90, self._apply_scheduled_changes)
+
+    def _apply_scheduled_changes(self):
+        self._render_job = None
+        self.apply_changes()
 
     def create_widgets(self):
         top_frame = ttk.Frame(self.root, padding=12)
@@ -28,7 +91,14 @@ class MediaVisualizerApp:
         ttk.Button(top_frame, text="Orijinale Dön", command=self.reset_image).pack(side="left", padx=8)
         ttk.Button(top_frame, text="Kaydet", command=self.save_image).pack(side="left")
 
-        ttk.Label(top_frame, text="Filtre:").pack(side="left", padx=(25, 5))
+        ttk.Label(top_frame, text="Theme:").pack(side="left", padx=(18, 5))
+        self.theme_select = ttk.Combobox(top_frame, state="readonly", width=10, values=("Graphite", "Midnight", "Light"))
+        self.theme_select.set(self.theme_name.title())
+        self.theme_select.pack(side="left")
+        self.theme_select.bind("<<ComboboxSelected>>", self._theme_selected)
+        ttk.Button(top_frame, text="Accent", command=self.choose_accent).pack(side="left", padx=(6, 0))
+
+        ttk.Label(top_frame, text="Filtre:").pack(side="left", padx=(18, 5))
         self.filter_name = tk.StringVar(value="Normal")
         filter_menu = ttk.Combobox(
             top_frame,
@@ -38,7 +108,7 @@ class MediaVisualizerApp:
             width=14,
         )
         filter_menu.pack(side="left")
-        filter_menu.bind("<<ComboboxSelected>>", lambda event: self.apply_changes())
+        filter_menu.bind("<<ComboboxSelected>>", lambda event: self._schedule_changes())
 
         self.brightness = tk.DoubleVar(value=1.0)
         ttk.Label(top_frame, text="Parlaklık").pack(side="left", padx=(25, 5))
@@ -47,7 +117,7 @@ class MediaVisualizerApp:
             from_=0.3,
             to=2.0,
             variable=self.brightness,
-            command=lambda value: self.apply_changes(),
+            command=lambda value: self._schedule_changes(),
             length=130,
         ).pack(side="left")
 
@@ -55,7 +125,7 @@ class MediaVisualizerApp:
         self.info_label.pack(fill="x")
 
         # Görsel alanı pencere büyüyüp küçülünce ortada kalır.
-        self.canvas = tk.Canvas(self.root, background="#20242b", highlightthickness=0)
+        self.canvas = tk.Canvas(self.root, background="#171f2a", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True, padx=12, pady=12)
         self.canvas.bind("<Configure>", lambda event: self.show_image())
 
