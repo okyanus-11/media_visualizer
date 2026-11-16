@@ -2,6 +2,7 @@
 
 import json
 import queue
+import re
 import threading
 from pathlib import Path
 import tkinter as tk
@@ -32,6 +33,8 @@ class AudioVisualizer:
         if self.theme_name not in THEMES:
             self.theme_name = "graphite"
         self.accent = self._preferences.get("accent", THEMES[self.theme_name]["accent"])
+        if not isinstance(self.accent, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", self.accent):
+            self.accent = THEMES[self.theme_name]["accent"]
 
         controls = ttk.Frame(root, padding=14)
         controls.pack(fill="x")
