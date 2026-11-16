@@ -44,3 +44,7 @@ Build standalone Windows executables with PyInstaller:
 python -m PyInstaller --noconfirm --onefile --windowed --name MediaVisualizer main.py
 python -m PyInstaller --noconfirm --onefile --windowed --name SoundVisualizer sound_visualizer.py
 ```
+
+## Installation
+
+For prerequisites, environment setup, configuration, and run/build commands, see the [installation guide](INSTALLATION.md).
