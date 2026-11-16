@@ -1,6 +1,7 @@
 """Basit görsel görselleştirici uygulaması."""
 
 import json
+import re
 from pathlib import Path
 import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox, ttk
@@ -28,6 +29,8 @@ class MediaVisualizerApp:
         if self.theme_name not in THEMES:
             self.theme_name = "graphite"
         self.accent = self._preferences.get("accent", THEMES[self.theme_name]["accent"])
+        if not isinstance(self.accent, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", self.accent):
+            self.accent = THEMES[self.theme_name]["accent"]
 
         self.create_widgets()
         self.apply_theme()
