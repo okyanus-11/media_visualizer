@@ -67,8 +67,10 @@ class MediaVisualizerApp:
         self._save_preferences()
 
     def _theme_selected(self, _event=None):
+        previous_default = THEMES[self.theme_name]["accent"]
         self.theme_name = self.theme_select.get().lower()
-        self.accent = THEMES[self.theme_name]["accent"]
+        if self.accent.lower() == previous_default.lower():
+            self.accent = THEMES[self.theme_name]["accent"]
         self.apply_theme()
 
     def choose_accent(self):
