@@ -47,4 +47,4 @@ python -m PyInstaller --noconfirm --onefile --windowed --name SoundVisualizer so
 
 ## Installation
 
-For prerequisites, environment setup, configuration, and run/build commands, see the [installation guide](INSTALLATION.md).
+Requires Python 3.10+ and Tkinter. Install `requirements.txt` and run `python main.py` for image visualization. The separate live sound visualizer uses Windows WASAPI loopback: install `sound_requirements.txt` and run `python sound_visualizer.py`. See the [full installation guide](INSTALLATION.md) for setup and optional executable builds.
